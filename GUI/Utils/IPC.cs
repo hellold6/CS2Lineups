@@ -10,7 +10,7 @@ namespace GUI.Utils;
 
 internal class Ipc
 {
-    private const string IpcWindowTitle = "Source2Viewer_IPC";
+    private const string IpcWindowTitle = AppIdentity.IpcWindowTitle;
 
     public static unsafe bool TryForwardToExistingInstance(string[] args)
     {

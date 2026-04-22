@@ -9,7 +9,6 @@ using ValveResourceFormat;
 using ValveResourceFormat.CompiledShader;
 using ValveResourceFormat.IO;
 using ValveResourceFormat.Renderer;
-using ValveResourceFormat.ToolsAssetInfo;
 
 namespace GUI.Utils
 {
@@ -33,11 +32,12 @@ namespace GUI.Utils
         }
 
         public VrfGuiContext? ParentGuiContext { get; }
-        public ToolsAssetInfo? ToolsAssetInfo { get; private set; }
-        private bool ToolsAssetInfoLoaded;
 
         // This is a hack to set camera and properties when clicking a mesh from a model or map
         internal Action<GLBaseControl>? GLPostLoadAction { get; set; }
+
+        // Stub — ToolsAssetInfo library was removed
+        public object? GetOrLoadToolsAssetInfo() => null;
 
         private int Children;
         private bool WantsToBeDisposed;
@@ -112,40 +112,6 @@ namespace GUI.Utils
             {
                 Dispose();
             }
-        }
-
-        /// <summary>
-        /// Lazily loads the tools asset info from disk if not already loaded.
-        /// </summary>
-        public ToolsAssetInfo? GetOrLoadToolsAssetInfo()
-        {
-            if (ToolsAssetInfoLoaded)
-            {
-                return ToolsAssetInfo;
-            }
-
-            ToolsAssetInfoLoaded = true;
-
-            var folder = Path.GetDirectoryName(FileName);
-            if (folder == null)
-            {
-                return null;
-            }
-
-            var path = Path.Join(folder, "readonly_tools_asset_info.bin");
-
-            if (!File.Exists(path))
-            {
-                path = Path.Join(Path.GetDirectoryName(folder), "readonly_tools_asset_info.bin");
-            }
-
-            if (File.Exists(path))
-            {
-                ToolsAssetInfo = new ToolsAssetInfo();
-                ToolsAssetInfo.Read(path);
-            }
-
-            return ToolsAssetInfo;
         }
 
         public void ClearCache()

@@ -287,7 +287,7 @@ namespace GUI.Controls
         public static void RegisterFileAssociation()
         {
             const string extension = ".vpk";
-            const string progId = $"VRF.Source2Viewer{extension}";
+            var progId = $"{AppIdentity.FileAssociationProgIdBase}{extension}";
 
             var applicationPath = Application.ExecutablePath;
 

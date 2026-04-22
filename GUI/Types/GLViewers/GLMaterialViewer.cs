@@ -723,49 +723,7 @@ namespace GUI.Types.GLViewers
 
         private void OnShadersButtonClick(object? s, EventArgs e)
         {
-            if (Resource.DataBlock is not Material material)
-            {
-                return;
-            }
-
-            var featureState = ShaderDataProvider.GetMaterialFeatureState(material);
-
-            if (Tabs == null || vcsShader == null)
-            {
-                // todo: open in new tab when we're in preivew
-                return;
-            }
-
-            var loadingTabPage = new ThemedTabPage(material.ShaderName);
-            var loadingFile = new LoadingFile();
-            loadingTabPage.Controls.Add(loadingFile);
-            Tabs.TabPages.Add(loadingTabPage);
-            Tabs.SelectTab(loadingTabPage);
-
-            var viewer = new CompiledShader(GuiContext);
-
-            try
-            {
-                var tabPage = new ThemedTabPage(material.ShaderName);
-                Tabs.TabPages.Add(tabPage);
-                viewer.Create(
-                    tabPage,
-                    vcsShader,
-                    Path.GetFileNameWithoutExtension(material.ShaderName.AsSpan()),
-                    ValveResourceFormat.CompiledShader.VcsProgramType.Features,
-                    featureState
-                );
-                viewer = null;
-
-                Tabs.SelectTab(tabPage);
-            }
-            finally
-            {
-                viewer?.Dispose();
-
-                Tabs.TabPages.Remove(loadingTabPage);
-                loadingTabPage.Dispose();
-            }
+            // CompiledShader viewer was removed
         }
 
         private void AddShaderButton()

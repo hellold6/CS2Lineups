@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -10,6 +11,7 @@ using ValveResourceFormat.IO;
 using ValveResourceFormat.Renderer;
 using ValveResourceFormat.Renderer.SceneEnvironment;
 using ValveResourceFormat.Renderer.SceneNodes;
+using ValveResourceFormat.Renderer.Utils;
 using ValveResourceFormat.Renderer.World;
 using ValveResourceFormat.ResourceTypes;
 using ValveResourceFormat.Serialization.KeyValues;
@@ -23,6 +25,8 @@ namespace GUI.Types.GLViewers
     /// </summary>
     class GLWorldViewer : GLSceneViewer
     {
+        public event Action<Vector3>? WorldPositionPicked;
+
         private readonly World? world;
         private readonly WorldNode? worldNode;
         private readonly ResourceExtRefList? mapExternalReferences;
@@ -696,6 +700,12 @@ namespace GUI.Types.GLViewers
         {
             Debug.Assert(SelectedNodeRenderer != null);
 
+            if (pickingResponse.Intent == PickingIntent.Select
+                && TryGetPickedWorldPosition(pickingResponse, out var worldPosition))
+            {
+                WorldPositionPicked?.Invoke(worldPosition);
+            }
+
             var pixelInfo = pickingResponse.PixelInfo;
 
             // Void
@@ -840,6 +850,62 @@ namespace GUI.Types.GLViewers
             });
         }
 
+        private bool TryGetPickedWorldPosition(PickingResponse pickingResponse, out Vector3 worldPosition)
+        {
+            worldPosition = Vector3.Zero;
+
+            if (Scene.PhysicsWorld == null || GLControl == null)
+            {
+                return false;
+            }
+
+            if (!TryGetPickRayDirection(pickingResponse.CursorPositionX, pickingResponse.CursorPositionY, out var rayDirection))
+            {
+                return false;
+            }
+
+            var rayStart = Renderer.Camera.Location;
+            var rayEnd = rayStart + rayDirection * 100_000f;
+            var traceResult = Scene.PhysicsWorld.TraceRay(rayStart, rayEnd);
+
+            if (!traceResult.Hit)
+            {
+                return false;
+            }
+
+            worldPosition = traceResult.HitPosition;
+            return true;
+        }
+
+        private bool TryGetPickRayDirection(int cursorPositionX, int cursorPositionY, out Vector3 rayDirection)
+        {
+            rayDirection = Vector3.Zero;
+
+            if (GLControl == null || GLControl.Width <= 0 || GLControl.Height <= 0)
+            {
+                return false;
+            }
+
+            var normalizedX = ((cursorPositionX + 0.5f) / GLControl.Width) * 2f - 1f;
+            var normalizedY = 1f - (((cursorPositionY + 0.5f) / GLControl.Height) * 2f);
+
+            var halfVerticalFov = Renderer.Camera.GetFOV() * 0.5f;
+            var tanHalfVerticalFov = MathF.Tan(halfVerticalFov);
+            var tanHalfHorizontalFov = tanHalfVerticalFov * Renderer.Camera.AspectRatio;
+
+            var ray = Renderer.Camera.Forward
+                + Renderer.Camera.Right * (normalizedX * tanHalfHorizontalFov)
+                + Renderer.Camera.Up * (normalizedY * tanHalfVerticalFov);
+
+            if (ray.LengthSquared() <= float.Epsilon)
+            {
+                return false;
+            }
+
+            rayDirection = Vector3.Normalize(ray);
+            return true;
+        }
+
         private void ShowEntityProperties(SceneNode sceneNode)
         {
             Debug.Assert(entityInfoForm != null);
@@ -913,6 +979,206 @@ namespace GUI.Types.GLViewers
 
             Scene.UpdateOctrees();
             SkyboxScene?.UpdateOctrees();
+        }
+
+        private List<LineSceneNode> trajectoryLineNodes = [];
+
+        private const int MaxExplorationSlots = 14;
+        private readonly List<List<LineSceneNode>> explorationSlots = [];
+        private int nextExplorationSlot;
+        private readonly List<LineSceneNode> matchLineNodes = [];
+        private readonly ConcurrentQueue<(IReadOnlyList<Vector3> Path, bool IsMatch)> pendingVisualizations = new();
+
+        /// <summary>
+        /// Display a trajectory path as a series of line segments in the 3D scene.
+        /// </summary>
+        public void ShowTrajectory(IReadOnlyList<Vector3> path)
+        {
+            ClearTrajectory();
+            ClearSearchVisualization();
+
+            if (path.Count < 2)
+            {
+                return;
+            }
+
+            using var lockedGl = MakeCurrent();
+
+            var trajectoryColor = new Color32(255, 100, 0);
+            var endColor = Color32.Red;
+
+            for (var i = 0; i < path.Count - 1; i++)
+            {
+                var t = (float)i / (path.Count - 1);
+                var segColor = new Color32(
+                    (byte)(255 - (int)(155 * t)),
+                    (byte)(100 - (int)(100 * t)),
+                    0
+                );
+
+                var lineNode = new LineSceneNode(Scene, path[i], path[i + 1], segColor, segColor);
+                Scene.Add(lineNode, true);
+                trajectoryLineNodes.Add(lineNode);
+            }
+
+            Scene.UpdateOctrees();
+        }
+
+        /// <summary>
+        /// Remove any previously displayed trajectory lines from the scene.
+        /// </summary>
+        public void ClearTrajectory()
+        {
+            if (trajectoryLineNodes.Count == 0)
+            {
+                return;
+            }
+
+            using var lockedGl = MakeCurrent();
+
+            foreach (var node in trajectoryLineNodes)
+            {
+                Scene.Remove(node, true);
+            }
+
+            trajectoryLineNodes.Clear();
+            Scene.UpdateOctrees();
+        }
+
+        /// <summary>
+        /// Position the camera at the given start position (at player eye height) looking toward the target.
+        /// </summary>
+        public void SetCameraForLineup(Vector3 startPosition, Vector3 targetPosition)
+        {
+            var eyeHeight = new Vector3(0, 0, 64);
+            var cameraPos = startPosition + eyeHeight;
+
+            Renderer.Camera.SetLocation(cameraPos);
+            Renderer.Camera.LookAt(targetPosition);
+            Renderer.Camera.RecalculateMatrices();
+        }
+
+        /// <summary>
+        /// Queue a trajectory for visualization during the next render frame.
+        /// This is safe to call from any thread and will not block the render loop.
+        /// </summary>
+        public void ShowSearchVisualization(IReadOnlyList<Vector3> path, bool isMatch)
+        {
+            if (path.Count < 2)
+            {
+                return;
+            }
+
+            pendingVisualizations.Enqueue((path, isMatch));
+        }
+
+        /// <summary>
+        /// Process queued search visualizations. Called during the render loop
+        /// which already holds the GL context, so camera input is not blocked.
+        /// </summary>
+        private void ProcessPendingVisualizations()
+        {
+            var processed = 0;
+
+            while (pendingVisualizations.TryDequeue(out var viz) && processed < 4)
+            {
+                var (path, isMatch) = viz;
+                var step = Math.Max(1, path.Count / 50);
+
+                if (isMatch)
+                {
+                    var color = Color32.Green;
+
+                    for (var i = 0; i < path.Count - step; i += step)
+                    {
+                        var endIdx = Math.Min(i + step, path.Count - 1);
+                        var lineNode = new LineSceneNode(Scene, path[i], path[endIdx], color, color);
+                        Scene.Add(lineNode, true);
+                        matchLineNodes.Add(lineNode);
+                    }
+                }
+                else
+                {
+                    if (explorationSlots.Count >= MaxExplorationSlots)
+                    {
+                        var oldSlot = explorationSlots[nextExplorationSlot];
+
+                        foreach (var node in oldSlot)
+                        {
+                            Scene.Remove(node, true);
+                        }
+
+                        oldSlot.Clear();
+                    }
+                    else
+                    {
+                        explorationSlots.Add([]);
+                    }
+
+                    var slotIndex = Math.Min(nextExplorationSlot, explorationSlots.Count - 1);
+                    var slot = explorationSlots[slotIndex];
+                    var color = new Color32(70, 130, 230);
+
+                    for (var i = 0; i < path.Count - step; i += step)
+                    {
+                        var endIdx = Math.Min(i + step, path.Count - 1);
+                        var lineNode = new LineSceneNode(Scene, path[i], path[endIdx], color, color);
+                        Scene.Add(lineNode, true);
+                        slot.Add(lineNode);
+                    }
+
+                    nextExplorationSlot = (nextExplorationSlot + 1) % MaxExplorationSlots;
+                }
+
+                processed++;
+            }
+
+            if (processed > 0)
+            {
+                Scene.UpdateOctrees();
+            }
+        }
+
+        /// <inheritdoc/>
+        protected override void OnPaint(float frameTime)
+        {
+            ProcessPendingVisualizations();
+            base.OnPaint(frameTime);
+        }
+
+        /// <summary>
+        /// Remove all search visualization lines (exploration and match trajectories).
+        /// </summary>
+        public void ClearSearchVisualization()
+        {
+            // Drain any pending items so they don't get rendered after clearing
+            while (pendingVisualizations.TryDequeue(out _)) { }
+
+            if (explorationSlots.Count == 0 && matchLineNodes.Count == 0)
+            {
+                return;
+            }
+
+            using var lockedGl = MakeCurrent();
+
+            foreach (var slot in explorationSlots)
+            {
+                foreach (var node in slot)
+                {
+                    Scene.Remove(node, true);
+                }
+            }
+
+            explorationSlots.Clear();
+            nextExplorationSlot = 0;
+
+            foreach (var node in matchLineNodes)
+            {
+                Scene.Remove(node, true);
+            }
+
+            matchLineNodes.Clear();
+            Scene.UpdateOctrees();
         }
     }
 }

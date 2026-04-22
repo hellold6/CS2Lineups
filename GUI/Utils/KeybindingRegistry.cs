@@ -150,12 +150,7 @@ namespace GUI.Utils
             }
 
             // Check other viewer types
-            return contents switch
-            {
-                Types.Viewers.Audio => ViewerType.AudioPlayer,
-                //PackageViewer => ViewerType.PackageViewer,
-                _ => ViewerType.Default
-            };
+            return ViewerType.Default;
         }
 
         /// <summary>

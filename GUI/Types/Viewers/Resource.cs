@@ -7,9 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using GUI.Controls;
-using GUI.Types.Audio;
 using GUI.Types.GLViewers;
-using GUI.Types.Graphs;
 using GUI.Utils;
 using ValveKeyValue;
 using ValveResourceFormat;
@@ -177,11 +175,6 @@ namespace GUI.Types.Viewers
                     break;
 
                 case ResourceType.NmGraph:
-                    if (resource.DataBlock is BinaryKV3 binaryKV3)
-                    {
-                        GLViewer = new AnimationGraphViewer(vrfGuiContext, rendererContext, binaryKV3.Data);
-                        GLViewerTabName = "ANIMATION GRAPH";
-                    }
                     break;
 
                 case ResourceType.Material:
@@ -446,6 +439,17 @@ namespace GUI.Types.Viewers
                     var entitiesTabPage = new ThemedTabPage("Entity List");
                     entitiesTabPage.Controls.Add(new EntityViewer(vrfGuiContext, loadedWorld.Entities, glWorldViewer.SelectAndFocusEntity));
                     resTabs.TabPages.Add(entitiesTabPage);
+
+                    // Add Grenade Lineup Control for map physics
+                    if (glWorldViewer.Scene.PhysicsWorld != null && resource.ResourceType == ResourceType.Map)
+                    {
+                        var grenadeTabPage = new ThemedTabPage("Grenade Lineups");
+                        var grenadeControl = new GrenadeLineupControl(vrfGuiContext);
+                        grenadeControl.Dock = DockStyle.Fill;
+                        grenadeTabPage.Controls.Add(grenadeControl);
+                        grenadeControl.InitializeWithMap(glWorldViewer.Scene.PhysicsWorld, glWorldViewer);
+                        resTabs.TabPages.Add(grenadeTabPage);
+                    }
                 }
 
                 GLViewer.InitializeRenderLoop();
@@ -475,14 +479,6 @@ namespace GUI.Types.Viewers
                     break;
 
                 case ResourceType.Sound:
-                    if (resource.ContainsBlockType(BlockType.DATA))
-                    {
-                        var specialTabPage = new ThemedTabPage("SOUND");
-                        var autoPlay = ((Settings.QuickPreviewFlags)Settings.Config.QuickFilePreview & Settings.QuickPreviewFlags.AutoPlaySounds) != 0;
-                        var ap = new AudioPlayer(resource, specialTabPage, isPreview && autoPlay);
-                        resTabs.TabPages.Add(specialTabPage);
-                        return true;
-                    }
                     break;
 
                 case ResourceType.EntityLump:
@@ -496,29 +492,10 @@ namespace GUI.Types.Viewers
                     break;
 
                 case ResourceType.ChoreoSceneFileData:
-                    {
-                        var specialTabPage = new ThemedTabPage("VCDLIST");
-                        specialTabPage.Controls.Add(new ChoreoViewer(resource));
-                        resTabs.TabPages.Add(specialTabPage);
-                        return true;
-                    }
+                    break;
 
                 case ResourceType.Shader:
-                    {
-                        var compiledShaderViewer = new CompiledShader(vrfGuiContext);
-                        try
-                        {
-                            var specialTabPage = new ThemedTabPage("SHADER");
-                            resTabs.TabPages.Add(specialTabPage);
-                            compiledShaderViewer.Create(specialTabPage);
-                            compiledShaderViewer = null;
-                        }
-                        finally
-                        {
-                            compiledShaderViewer?.Dispose();
-                        }
-                        return true;
-                    }
+                    break;
             }
 
             return false;
@@ -644,15 +621,6 @@ namespace GUI.Types.Viewers
             resource.Reader.BaseStream.Position = block.Offset;
             var input = resource.Reader.ReadBytes((int)block.Size);
 
-            var text = ByteViewer.GetTextFromBytes(input.AsSpan());
-
-            if (!string.IsNullOrEmpty(text))
-            {
-                var textBox = CodeTextBox.Create(text);
-                blockTab.Controls.Add(textBox);
-                return;
-            }
-
             var bv = new System.ComponentModel.Design.ByteViewer
             {
                 Dock = DockStyle.Fill
@@ -667,36 +635,6 @@ namespace GUI.Types.Viewers
 
         private void AddTextViewControl(ValveResourceFormat.Resource resource, Block block, TabPage blockTab)
         {
-            if (resource.ResourceType == ResourceType.SboxShader && block is SboxShader shaderBlock)
-            {
-                var tabPage = new ThemedTabPage();
-                var viewer = new CompiledShader(vrfGuiContext);
-
-                try
-                {
-                    viewer.Create(
-                        tabPage,
-                        shaderBlock.Shaders,
-                        Path.GetFileNameWithoutExtension(resource.FileName.AsSpan()),
-                        ValveResourceFormat.CompiledShader.VcsProgramType.Features
-                    );
-
-                    foreach (Control control in tabPage.Controls)
-                    {
-                        blockTab.Controls.Add(control);
-                    }
-
-                    viewer = null;
-                }
-                finally
-                {
-                    viewer?.Dispose();
-                    tabPage.Dispose();
-                }
-
-                return;
-            }
-
             AddTextViewControl(resource.ResourceType, block, blockTab);
         }
 

@@ -224,3 +224,5 @@ Tests/lcov.info
 /docs/.vitepress/dist/
 /docs/.vitepress/cache/
 /docs/.vitepress/temp/
+grenade_debug.txt
+grenade_known_throw_debug.txt

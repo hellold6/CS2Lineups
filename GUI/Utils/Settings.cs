@@ -122,7 +122,7 @@ namespace GUI.Utils
         /// </summary>
         public static void Load()
         {
-            SettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Source2Viewer");
+            SettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppIdentity.AppDataFolderName);
             SettingsFilePath = Path.Combine(SettingsFolder, "settings.vdf");
 
             Directory.CreateDirectory(SettingsFolder);
@@ -159,8 +159,8 @@ namespace GUI.Utils
             if (currentVersion > SettingsFileCurrentVersion)
             {
                 var result = MessageBox.Show(
-                    $"Your current settings.vdf has a higher version ({currentVersion}) than currently supported ({SettingsFileCurrentVersion}). You likely ran an older version of Source 2 Viewer and your settings may get reset.\n\nDo you want to continue?",
-                    "Source 2 Viewer downgraded",
+                    $"Your current settings.vdf has a higher version ({currentVersion}) than currently supported ({SettingsFileCurrentVersion}). You likely ran an older version of {AppIdentity.ProductName} and your settings may get reset.\n\nDo you want to continue?",
+                    $"{AppIdentity.ProductName} downgraded",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question
                 );

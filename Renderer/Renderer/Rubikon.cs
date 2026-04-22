@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -30,6 +31,8 @@ public class Rubikon
     /// Convex hull collision data with vertices, edges, and planes.
     /// </summary>
     public record PhysicsHullData(
+        string[] InteractAs,
+        string[] InteractExclude,
         Vector3 Min,
         Vector3 Max,
         Vector3[] VertexPositions,
@@ -48,6 +51,12 @@ public class Rubikon
     public Node[] HullTree { get; }
 
     private int[] HullIndices { get; }
+
+    /// <summary>
+    /// Optional debug log writer. When set, TraceRay will log each shape evaluated
+    /// (collision tags, skip/allow decision, hit results).
+    /// </summary>
+    public TextWriter? TraceDebugLog { get; set; }
 
     /// <summary>Initializes Rubikon by parsing all mesh and hull shapes from the physics aggregate data.</summary>
     /// <param name="physicsData">Source physics aggregate containing shapes and collision attributes.</param>
@@ -87,8 +96,12 @@ public class Rubikon
             var faceEdgeIndices = hull.GetFaces();
             var planes = hull.GetPlanes();
 
+            var collisionAttributes = physicsData.CollisionAttributes[hullDesc.CollisionAttributeIndex];
+            var interactAs = collisionAttributes.GetArray<string>("m_InteractAsStrings");
+            var interactExclude = collisionAttributes.GetArray<string>("m_InteractExcludeStrings");
 
             Hulls[hullIndex++] = new PhysicsHullData(
+                interactAs, interactExclude,
                 hull.Min, hull.Max,
                 [.. vertexPositions],
                 [.. halfEdges],
@@ -169,6 +182,59 @@ public class Rubikon
         }
     }
 
+    /// <summary>
+    /// Determines whether a shape should be included in a trace based on its collision attributes.
+    /// </summary>
+    /// <param name="interactAs">Shape's interaction tags (e.g. "playerclip", "passbullets").</param>
+    /// <param name="interactExclude">Shape's exclusion tags.</param>
+    /// <param name="collisionName">The collision group performing the trace (empty string for default/bullet traces).</param>
+    /// <param name="debugLog">Optional debug writer used to log the filtering decision.</param>
+    /// <param name="shapeLabel">Optional human-readable shape label for debug output.</param>
+    private static bool ShouldTraceShape(
+        string[] interactAs,
+        string[] interactExclude,
+        string collisionName,
+        TextWriter? debugLog = null,
+        string? shapeLabel = null)
+    {
+        var allowed = false;
+
+        if (collisionName == "player")
+        {
+            if (interactExclude.Contains("player"))
+            {
+                allowed = false;
+            }
+            else
+            {
+                allowed = interactAs.Length == 0 || interactAs.Contains("playerclip");
+            }
+        }
+
+        if (collisionName != "player")
+        {
+            // Default trace (bullets/grenades): skip non-world shapes unless they have "passbullets"
+            allowed = interactAs.Length == 0 || interactAs.Contains("passbullets");
+        }
+
+        if (debugLog != null && shapeLabel != null)
+        {
+            WriteTraceDebugLine(debugLog, $"  {shapeLabel} InteractAs=[{string.Join(",", interactAs)}] InteractExclude=[{string.Join(",", interactExclude)}] -> {(allowed ? "ALLOWED" : "SKIPPED")}");
+        }
+
+        return allowed;
+    }
+
+    private static void WriteTraceDebugLine(TextWriter? debugLog, string message)
+    {
+        debugLog?.WriteLine(message);
+
+        if (debugLog != null)
+        {
+            Console.WriteLine(message);
+        }
+    }
+
     /// <summary>Traces a ray against all physics shapes and returns the closest hit.</summary>
     /// <param name="from">Ray start position.</param>
     /// <param name="to">Ray end position.</param>
@@ -176,23 +242,45 @@ public class Rubikon
     public TraceResult TraceRay(Vector3 from, Vector3 to)
     {
         TraceResult closestHit = new();
+        var debugLog = TraceDebugLog;
 
         RayTraceContext ray = new(from, to);
 
-        foreach (var mesh in Meshes)
+        for (var m = 0; m < Meshes.Length; m++)
         {
-            if (mesh.InteractAs.Length > 0 && !mesh.InteractAs.Contains("passbullets"))
+            var mesh = Meshes[m];
+            var allowed = ShouldTraceShape(mesh.InteractAs, mesh.InteractExclude, string.Empty, debugLog, $"Mesh[{m}]");
+
+            if (!allowed)
             {
                 continue;
             }
 
             var hit = RayIntersectsWithMesh(ray, mesh);
+            if (hit.Hit && debugLog != null)
+            {
+                WriteTraceDebugLine(debugLog, $"    Mesh[{m}] HIT at ({hit.HitPosition.X:F2},{hit.HitPosition.Y:F2},{hit.HitPosition.Z:F2}) normal=({hit.HitNormal.X:F3},{hit.HitNormal.Y:F3},{hit.HitNormal.Z:F3}) dist={hit.Distance:F2}");
+            }
+
             closestHit.MinimizeWith(hit);
         }
 
-        foreach (var hull in Hulls)
+        for (var h = 0; h < Hulls.Length; h++)
         {
+            var hull = Hulls[h];
+            var allowed = ShouldTraceShape(hull.InteractAs, hull.InteractExclude, string.Empty, debugLog, $"Hull[{h}]");
+
+            if (!allowed)
+            {
+                continue;
+            }
+
             var hit = RayIntersectsWithHull(ray, hull);
+            if (hit.Hit && debugLog != null)
+            {
+                WriteTraceDebugLine(debugLog, $"    Hull[{h}] HIT at ({hit.HitPosition.X:F2},{hit.HitPosition.Y:F2},{hit.HitPosition.Z:F2}) normal=({hit.HitNormal.X:F3},{hit.HitNormal.Y:F3},{hit.HitNormal.Z:F3}) dist={hit.Distance:F2}");
+            }
+
             closestHit.MinimizeWith(hit);
         }
 
@@ -246,18 +334,9 @@ public class Rubikon
         // Check against all meshes
         foreach (var mesh in Meshes)
         {
-            // player collision rules
-            if (collisionName == "player")
+            if (!ShouldTraceShape(mesh.InteractAs, mesh.InteractExclude, collisionName))
             {
-                if (mesh.InteractExclude.Contains("player"))
-                {
-                    continue;
-                }
-
-                if (mesh.InteractAs.Length > 0 && !mesh.InteractAs.Contains("playerclip"))
-                {
-                    continue;
-                }
+                continue;
             }
 
             var hit = AABBTraceMesh(trace, mesh);
@@ -269,7 +348,7 @@ public class Rubikon
 
         if (HullTree.Length > 0)
         {
-            var hit = AABBTraceHullBVH(trace);
+            var hit = AABBTraceHullBVH(trace, collisionName);
             closestHit.MinimizeWith(hit);
         }
 
@@ -358,7 +437,7 @@ public class Rubikon
         return closestHit;
     }
 
-    private TraceResult AABBTraceHullBVH(AABBTraceContext trace)
+    private TraceResult AABBTraceHullBVH(AABBTraceContext trace, string collisionName)
     {
         Span<(Node Node, int Index)> stack = stackalloc (Node Node, int Index)[STACK_SIZE];
         var stackCount = 0;
@@ -402,6 +481,12 @@ public class Rubikon
             {
                 var hullIndex = HullIndices[i];
                 var hull = Hulls[hullIndex];
+
+                if (!ShouldTraceShape(hull.InteractAs, hull.InteractExclude, collisionName))
+                {
+                    continue;
+                }
+
                 var hit = AABBTraceHull(trace, hull);
 
                 if (closestHit.MinimizeWith_EarlyExit(hit))

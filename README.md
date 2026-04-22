@@ -1,138 +1,70 @@
-<h1 align="center"><img src="./Misc/Icons/source2viewer.png" width="64" height="64" align="center"> Source 2 Viewer</h1>
+# CS2 Grenade Lineup Tool
 
-<p align="center">
-    <a href="https://github.com/ValveResourceFormat/ValveResourceFormat/actions" title="Build Status"><img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/ValveResourceFormat/ValveResourceFormat/build.yml?logo=github&label=Build&logoColor=ffffff&style=for-the-badge&branch=master"></a>
-    <a href="https://www.nuget.org/packages/ValveResourceFormat/" title="NuGet Library Downloads"><img alt="NuGet Library Downloads" src="https://img.shields.io/nuget/dt/ValveResourceFormat.svg?logo=nuget&label=Library&logoColor=ffffff&color=004880&style=for-the-badge"></a>
-    <a href="https://www.nuget.org/packages/ValveResourceFormat.Renderer/" title="NuGet Renderer Downloads"><img alt="NuGet Renderer Downloads" src="https://img.shields.io/nuget/dt/ValveResourceFormat.Renderer.svg?logo=nuget&label=Renderer&logoColor=ffffff&color=004880&style=for-the-badge"></a>
-    <a href="https://app.codecov.io/gh/ValveResourceFormat/ValveResourceFormat" title="Code Coverage"><img alt="Code Coverage" src="https://img.shields.io/codecov/c/github/ValveResourceFormat/ValveResourceFormat/master?logo=codecov&label=Coverage&logoColor=ffffff&color=F01F7A&style=for-the-badge"></a>
-    <a href="https://discord.gg/s9QQ7Wg7r4" title="Discord"><img alt="Discord" src="https://img.shields.io/discord/1408482312060145725?logo=discord&label=Discord&logoColor=ffffff&color=5865F2&style=for-the-badge"></a>
-</p>
+A grenade lineup finder for Counter-Strike 2, built on top of [ValveResourceFormat (VRF)](https://github.com/ValveResourceFormat/ValveResourceFormat).
 
-Valve's Source 2 resource file format parser, renderer, decompiler, and exporter.
-The library component is called **ValveResourceFormat (VRF)**.
+Load any CS2 map, pick a start and target position in the 3D viewport, and the tool will brute-force search for grenade trajectories that land where you want — with live Baritone-style visualization of the search in progress.
 
-> [!IMPORTANT]
-> [**For more information and downloads of *Source 2 Viewer*, visit the website.**](https://s2v.app/)
->
-> [View Library API documentation here.](https://s2v.app/ValveResourceFormat/api/ValveResourceFormat.html) [View guide on getting started with parsing resources.](https://s2v.app/ValveResourceFormat/guides/read-resource.html)
+## Features
 
-<img src="./Misc/Icons/readme_screenshot.webp" width="1100" height="700" align="center">
+- **Map loading** — opens compiled CS2 `.vpk` maps with full 3D rendering via VRF's OpenGL renderer
+- **Position picking** — click in the 3D viewport to set start and target positions on real map geometry (Rubikon physics ray tracing)
+- **Lineup search** — parallel brute-force over pitch, yaw, and velocity space finds throws that land within tolerance of the target
+- **Live search visualization** — watch trajectories being evaluated in real time: blue arcs cycle through candidates, green arcs mark matches as they're found
+- **Result inspection** — select a result to see its full trajectory rendered as an orange arc, with the camera positioned at the throw position
+- **Cancellation and progress** — progress bar with live candidate/match counts, cancel anytime
 
-## Contributing
+## How to Use
 
-This tool is based entirely on reverse engineering
-as Valve does not provide Source 2 documentation or code.
-Not all formats are fully supported.
-If you are interested in helping, take a look at the
-[open issues](https://github.com/ValveResourceFormat/ValveResourceFormat/issues)
-and join our Discord. See [CONTRIBUTING.md](CONTRIBUTING.md)
-and [AGENTS.md](AGENTS.md) for more information.
+1. Open a CS2 map file (`.vpk` containing a `.vmap_c`)
+2. Go to the **Grenade Lineups** tab
+3. Click **Pick Start** → click a position in the 3D map view
+4. Click **Pick Target** → click where you want the grenade to land
+5. Click **Find Lineup** and watch the search visualize in the viewport
+6. Select results from the list to inspect individual trajectories
 
-<details>
-<summary>Supported resource types</summary>
+## Building
 
-Ext           | Name                              | Support
-------------- | --------------------------------- | -------
-vagrp         | Animation Group                   | 👍
-valst         | Action List                       | 👍
-vanim         | Animation                         | 👍
-vanmgrph      | Animation Graph                   | 👍
-vcd           | Choreo                            | 👍
-vcdlist       | Choreo Scene File Data            | 👍
-vcompmat      | Composite Material                | 👍
-vcss          | Panorama Style                    | 👍
-vdata         | Data                              | 👍
-vents         | EntityLump                        | 👍
-vjs           | Panorama Script                   | 👍
-vmap          | Map                               | 👍
-vmat          | Material                          | 👍
-vmdl          | Model                             | 👍
-vmesh         | Mesh                              | 👍
-vmix          | VMix                              | 👍
-vmks          | Sheet                             | 👍
-vmorf         | MorphSet                          | 👍
-vnmclip       | NmClip                            | 👍
-vnmgrph       | NmGraph                           | 👍
-vnmikrig      | NmIKRig                           | 👍
-vnmskel       | NmSkeleton                        | 👍
-vnmvar        | NmGraph Variation                 | 👍
-vpcf          | Particle System                   | 👍
-vpdi          | Panorama Dynamic Images           | 👍
-vphys         | Physics Collision Mesh            | 👍
-vpost         | Postprocessing Settings           | 👍
-vpram         | Processing Graph Instance         | 👍
-vpsf          | Particle Snapshot                 | 👍
-vpulse        | Pulse Graph Definition            | 👍
-vrman         | ResourceManifest                  | 👍
-vrmap         | Resource Remap Table              | No
-vrr           | Response Rules                    | 👍
-vseq          | Sequence Group                    | No
-vsmart        | Smart Prop                        | 👍
-vsnap         | Particle Snapshot                 | 👍
-vsnd          | Sound                             | 👍
-vsndevts      | Sound Event Script                | 👍
-vsndstck      | Sound Stack Script                | 👍
-vsurf         | Surface Properties                | No
-vsvg          | Panorama Vector Graphic           | 👍
-vtex          | Compiled Texture                  | 👍
-vts           | Panorama TypeScript               | 👍
-vvis          | World Visibility                  | 👍
-vwnod         | World Node                        | 👍
-vwrld         | World                             | 👍
-vxml          | Panorama Layout                   | 👍
-&nbsp;        | &nbsp;                            | &nbsp;
-econitem      | Economy Item                      | 👍
-herolist      | Dota Hero List                    | 👍
-item          | Artifact Item                     | 👍
-vdpn          | Dota Patch Notes                  | 👍
-vdvn          | Dota Visual Novels                | 👍
-&nbsp;        | &nbsp;                            | &nbsp;
-bin           | Tools Asset Info                  | 👍 Handled by `ToolsAssetInfo`
-dat           | Closed Captions                   | 👍 Handled by `ClosedCaptions`
-vcs           | Compiled Shader                   | 👍 Handled by `CompiledShader`
-vdacdefs      | DAC Game Defs Data                | No
-vfe           | Flex Scene File                   | 👍 Handled by `FlexSceneFile`
-vfont         | Bitmap Font                       | 👍 Decrypts `VFONT1`, supported in Source 1 and Source 2.
-vpk           | Pak (package)                     | 👍 Handled by [ValvePak](https://github.com/ValveResourceFormat/ValvePak)
+Requires the latest .NET SDK.
 
-</details>
+```
+dotnet build
+dotnet run --project GUI
+```
 
-<details>
-<summary>List of supported magics</summary>
+## Running Tests
 
-Magic        | Description
------------- | ------------
-`0x03564B56` | VKV\x03 - First binary keyvalues 3 encoding with custom block compression
-`0x4B563301` | KV3\x01 - Binary keyvalues 3 (version 1)
-`0x4B563302` | KV3\x02 - Binary keyvalues 3 (version 2)
-`0x4B563303` | KV3\x03 - Binary keyvalues 3 (version 3)
-`0x4B563304` | KV3\x04 - Binary keyvalues 3 (version 4)
-`0x4B563305` | KV3\x05 - Binary keyvalues 3 (version 5)
-`0x564B4256` | VBKV - binary keyvalues 1 (handled by ValveKeyvalue)
-`0x55AA1234` | VPK - valve package (handled by ValvePak)
-`0x44434356` | VCCD - closed captions
-`0xC4CCACE8` | tools asset info
-`0xC4CCACE9` | tools asset info (newer version)
-`0x32736376` | vcs2 - compiled shader
-`0x414D5A4C` | LZMA compression marker
-`0x64637662` | bvcd - binary choreo scene
-`0xFEEDFACE` | navigation mesh
-`0xFADEBEAD` | grid navigation
-`0x31415926` | murmurhash2 seed used by StringToken
-`0xEDABCDEF` | murmurhash64 seed used to encode resource IDs
-`VFONT1`     | "encrypted" font file
-`0x00564645` | VFE - flex scene file
+```
+dotnet test
+```
 
-</details>
+## Project Structure
 
-## GUI
+Folder | Description
+-------|------------
+`ValveResourceFormat/` | Core Source 2 resource parsing library (includes `GrenadeSimulator`)
+`Renderer/` | OpenGL rendering engine, trajectory calculator, and lineup searcher
+`GUI/` | WinForms viewer application with grenade lineup UI
+`CLI/` | Command-line decompiler
+`Tests/` | NUnit test suite
 
-Source 2 Viewer keeps its settings in `%LocalAppData%/Source2Viewer/settings.vdf`.
+## Physics
+
+The grenade simulator uses:
+- Euler integration at 66.67 Hz (0.015s timestep)
+- 800 u/s² gravity on the Z axis (Source 2 Z-up coordinates)
+- Rubikon ray tracing for collision detection against real map geometry
+- Velocity reflection with 0.4 bounce restitution
+- Surface nudge after bounce to prevent re-collision
+- 10 second max simulation time
+- Player throw height offset of 64 units
+
+Physics constants are placeholders and will be calibrated against actual CS2 values.
+
+## Credits
+
+Built on [ValveResourceFormat](https://github.com/ValveResourceFormat/ValveResourceFormat) — Valve's Source 2 resource file format parser, renderer, decompiler, and exporter.
 
 ## License
 
-Contents of this repository are available under [MIT license](LICENSE), except for `Tests/Files` folder which contains files that have likely come from Valve's games.
+Contents of this repository are available under the [MIT license](LICENSE).
 
-## Code signing policy
-
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).

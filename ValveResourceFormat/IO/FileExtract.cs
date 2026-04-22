@@ -319,8 +319,6 @@ namespace ValveResourceFormat.IO
 
             return magic switch
             {
-                FlexSceneFile.FlexSceneFile.MAGIC => new FlexSceneExtract(stream).ToContentFile(),
-                ClosedCaptions.ClosedCaptions.MAGIC => new ClosedCaptionsExtract(stream, fileName).ToContentFile(),
                 NavMesh.NavMeshFile.MAGIC => ExtractNavMesh(stream, fileName),
                 _ => null,
             };

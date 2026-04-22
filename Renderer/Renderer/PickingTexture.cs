@@ -31,6 +31,12 @@ public class PickingTexture : Framebuffer
         /// <summary>Gets the interaction intent that triggered this pick.</summary>
         public PickingIntent Intent { get; init; }
 
+        /// <summary>Gets the cursor X position in window coordinates.</summary>
+        public int CursorPositionX { get; init; }
+
+        /// <summary>Gets the cursor Y position in window coordinates.</summary>
+        public int CursorPositionY { get; init; }
+
         /// <summary>Gets the pixel data read back from the picking framebuffer.</summary>
         public PixelInfo PixelInfo { get; init; }
     }
@@ -124,6 +130,8 @@ public class PickingTexture : Framebuffer
             Response = new PickingResponse
             {
                 Intent = Intent,
+                CursorPositionX = CursorPositionX,
+                CursorPositionY = CursorPositionY,
                 PixelInfo = pixelInfo,
             };
         }

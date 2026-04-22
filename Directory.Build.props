@@ -11,8 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/Misc/ValveResourceFormat.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup>

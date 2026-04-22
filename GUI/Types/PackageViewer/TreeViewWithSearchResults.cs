@@ -1615,51 +1615,8 @@ namespace GUI.Types.PackageViewer
                 return null;
             }
 
-            var toolsAssetInfo = vrfGuiContext.GetOrLoadToolsAssetInfo();
-            if (toolsAssetInfo == null)
-            {
-                return null;
-            }
-
-            var assetSearchData = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
-            var searchDataKeys = new Dictionary<string, SortedSet<string>>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var (filePath, file) in toolsAssetInfo.Files)
-            {
-                if (file.SearchableUserData.Count == 0)
-                {
-                    continue;
-                }
-
-                var converted = new Dictionary<string, string>(file.SearchableUserData.Count, StringComparer.OrdinalIgnoreCase);
-
-                foreach (var (key, value) in file.SearchableUserData)
-                {
-                    var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
-                    converted[key] = stringValue;
-
-                    if (!searchDataKeys.TryGetValue(key, out var values))
-                    {
-                        values = new SortedSet<string>(SearchForm.NumericComparer);
-                        searchDataKeys[key] = values;
-                    }
-
-                    if (values.Count < 100)
-                    {
-                        values.Add(stringValue);
-                    }
-                }
-
-                assetSearchData[filePath] = converted;
-            }
-
-            if (searchDataKeys.Count > 0)
-            {
-                AssetSearchData = assetSearchData;
-                SearchDataKeys = searchDataKeys;
-            }
-
-            return SearchDataKeys;
+            // ToolsAssetInfo was removed — feature not available
+            return null;
         }
 
         private bool MatchesAssetFilter(PackageEntry entry, string filterKey, string? filterValue)

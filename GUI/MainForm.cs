@@ -965,97 +965,15 @@ namespace GUI
                 await viewer.LoadAsync(stream).ConfigureAwait(false);
                 return viewer;
             }
-            else if (Types.Viewers.CompiledShader.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.CompiledShader(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.ClosedCaptions.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.ClosedCaptions(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.ToolsAssetInfo.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.ToolsAssetInfo(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.FlexSceneFile.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.FlexSceneFile(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.NavView.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.NavView(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.BinaryKeyValues3.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.BinaryKeyValues3(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.BinaryKeyValues2.IsAccepted(magic, vrfGuiContext.FileName))
-            {
-                var viewer = new Types.Viewers.BinaryKeyValues2(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.BinaryKeyValues1.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.BinaryKeyValues1(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
             else if (Types.Viewers.Resource.IsAccepted(magicResourceVersion))
             {
                 var viewer = new Types.Viewers.Resource(vrfGuiContext, viewMode, verifyFileSize: entry == null || entry.CRC32 > 0);
                 await viewer.LoadAsync(stream).ConfigureAwait(false);
                 return viewer;
             }
-            // Raw images and audio files do not really appear in Source 2 projects, but we support viewing them anyway.
-            // As some detections rely on the file extension instead of magic bytes,
-            // they should be detected at the bottom here, after failing to detect a proper resource file.
-            else if (Types.Viewers.Image.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.Image(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.ImageVector.IsAccepted(vrfGuiContext.FileName))
-            {
-                var viewer = new Types.Viewers.ImageVector(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.Audio.IsAccepted(magic, vrfGuiContext.FileName))
-            {
-                var viewer = new Types.Viewers.Audio(vrfGuiContext, viewMode == ResourceViewMode.ViewerOnly);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.GridNavFile.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.GridNavFile(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
-            else if (Types.Viewers.SpirvBinary.IsAccepted(magic))
-            {
-                var viewer = new Types.Viewers.SpirvBinary(vrfGuiContext);
-                await viewer.LoadAsync(stream).ConfigureAwait(false);
-                return viewer;
-            }
 
-            var byteViewer = new Types.Viewers.ByteViewer(vrfGuiContext);
-            await byteViewer.LoadAsync(stream).ConfigureAwait(false);
-            return byteViewer;
+            // Unsupported file type — return null or a minimal fallback
+            return null!;
         }
 
         private void MainForm_DragDrop(object sender, DragEventArgs e)

@@ -296,7 +296,7 @@ namespace GUI
 
                 context.CurrentPackage.ReadEntry(file, out var output, validateCrc: file.CRC32 > 0);
 
-                var tempPath = $"{Path.GetTempPath()}Source 2 Viewer - {Path.GetFileName(context.CurrentPackage.FileName)} - {file.GetFileName()}";
+                var tempPath = $"{Path.GetTempPath()}{AppIdentity.ExtractedFileTempPrefix} - {Path.GetFileName(context.CurrentPackage.FileName)} - {file.GetFileName()}";
                 using (var stream = new FileStream(tempPath, FileMode.Create))
                 {
                     stream.Write(output, 0, output.Length);
@@ -315,29 +315,7 @@ namespace GUI
 
         private void OnViewAssetInfoToolStripMenuItemClick(object sender, EventArgs e)
         {
-            var (guiContext, selectedNode) = GetSingleSelectedNode(sender);
-            if (guiContext == null || selectedNode == null || selectedNode.IsFolder || selectedNode.PackageEntry == null)
-            {
-                return;
-            }
-
-            Cursor.Current = Cursors.WaitCursor;
-
-            try
-            {
-                var tab = Types.Viewers.SingleAssetInfo.Create(guiContext, selectedNode.PackageEntry);
-
-                if (tab != null)
-                {
-                    tab.ImageIndex = Icons["Info"];
-                    mainTabs.TabPages.Add(tab);
-                    mainTabs.SelectTab(tab);
-                }
-            }
-            finally
-            {
-                Cursor.Current = Cursors.Default;
-            }
+            // ToolsAssetInfo/SingleAssetInfo was removed
         }
 
         private static (VrfGuiContext?, IBetterBaseItem?) GetSingleSelectedNode(object sender)
