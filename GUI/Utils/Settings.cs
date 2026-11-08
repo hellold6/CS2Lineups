@@ -81,7 +81,6 @@ namespace GUI.Utils
             /// <summary>Gets or sets the window state (normal, minimized, maximized).</summary>
             public int WindowState { get; set; }
             /// <summary>Gets or sets the normalized audio playback volume.</summary>
-            public float Volume { get; set; }
             /// <summary>Gets or sets the swap interval (the number of screen updates to wait between swapping front and back buffers).</summary>
             public int Vsync { get; set; }
             /// <summary>Gets or sets whether the FPS counter is shown in the viewport.</summary>
@@ -216,7 +215,6 @@ namespace GUI.Utils
             }
 
             Config.AntiAliasingSamples = Math.Clamp(Config.AntiAliasingSamples, 0, 64);
-            Config.Volume = MathUtils.Saturate(Config.Volume);
             Config.TextViewerFontSize = Math.Clamp(Config.TextViewerFontSize, 8, 24);
             Config.PackageGridSize = Math.Clamp(Config.PackageGridSize, 0, Enum.GetValues<Types.PackageViewer.ThumbnailSizes>().Length - 1);
 
@@ -227,7 +225,6 @@ namespace GUI.Utils
 
             if (currentVersion < 3) // version 3: added volume
             {
-                Config.Volume = 0.5f;
             }
 
             if (currentVersion < 4) // version 4: added vsync

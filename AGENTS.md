@@ -1,13 +1,12 @@
 ## Project Overview
 
-ValveResourceFormat (VRF) is a C# library and toolset for parsing Valve's Source 2 resource formats. The project folders are:
+CS2 Grenade Lineup Tool: a viewer for CS2 maps that searches for grenade throws landing on a target. It is built on a trimmed fork of ValveResourceFormat (VRF). The project folders are:
 - **ValveResourceFormat/** - Core parsing library published to NuGet
 - **GUI/** - WinForms-based viewer application
-- **CLI/** - Command-line decompiler and file viewer
 - **Renderer/** - OpenGL rendering engine for Source 2 assets.
   - Shaders use `.slang` extension (`.frag.slang`, `.vert.slang`) with GLSL syntax.
   - Shader files must only contain ASCII characters.
-- **Tests/** - NUnit test suite for the ValveResourceFormat library.
+- **Tests/** - NUnit tests for the grenade simulator.
   - Only run tests when changing code in `ValveResourceFormat/`. Other projects are not covered.
   - Run with `dotnet test` - tests are fast, no need to filter.
   - Test files use NUnit with `[TestFixture]` and `[Test]` attributes.

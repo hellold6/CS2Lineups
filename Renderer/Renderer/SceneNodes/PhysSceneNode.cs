@@ -283,7 +283,7 @@ namespace ValveResourceFormat.Renderer.SceneNodes
                 var tags = attributes.GetArray<string>("m_InteractAsStrings") ?? attributes.GetArray<string>("m_PhysicsTagStrings");
                 var group = attributes.GetStringProperty("m_CollisionGroupString");
 
-                var tooltexture = MapExtract.GetToolTextureShortenedName_ForInteractStrings([.. tags]);
+                var tooltexture = PhysToolTextures.GetShortenedName([.. tags]);
 
                 var physName = string.Empty;
 
@@ -326,7 +326,7 @@ namespace ValveResourceFormat.Renderer.SceneNodes
 
                 if (classname != null)
                 {
-                    var toolTexture = MapExtract.GetToolTextureForEntity(classname);
+                    var toolTexture = PhysToolTextures.GetForEntity(classname);
                     if (!string.IsNullOrEmpty(toolTexture))
                     {
                         physSceneNode.SetToolTexture(toolTexture);

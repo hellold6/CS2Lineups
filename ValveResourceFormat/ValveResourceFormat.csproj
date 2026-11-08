@@ -1,11 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Description>Parser, decompiler, and exporter for Valve's Source 2 resource file formats. Supports models, textures, materials, maps, particles, and more.</Description>
-    <PackageReleaseNotes>View release notes at https://github.com/ValveResourceFormat/ValveResourceFormat/releases</PackageReleaseNotes>
-    <PackageIcon>source2viewer_dark.png</PackageIcon>
-    <PackageTags>source2 dota2 dota steam valve halflife artifact underlords</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Source 2 resource parsing and grenade simulation for the CS2 lineup tool</Description>
     <PublishAot>true</PublishAot>
     <IsAotCompatible>true</IsAotCompatible>
     <NoWarn>$(NoWarn);NU5104;CS8002</NoWarn>
@@ -19,7 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
-    <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.6" />
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.5" />
@@ -28,12 +23,6 @@
     <PackageReference Include="ValvePak" Version="4.0.0.142" />
     <PackageReference Include="Vortice.SpirvCross" Version="1.5.4" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.7" />
-    <PackageReference Include="KeyValues2" Version="0.8.0" />
-    <PackageReference Include="TinyEXR.NET" Version="0.3.11" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
-    <None Include="..\Misc\Icons\source2viewer_dark.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="ValveResourceFormat.Utils" />

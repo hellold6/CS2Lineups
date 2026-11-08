@@ -26,10 +26,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NAudio.Wasapi" Version="2.3.0" />
-    <PackageReference Include="NAudio.WinMM" Version="2.3.0" />
-    <PackageReference Include="NLayer" Version="1.16.0" />
-    <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0" />
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="Svg.Skia" Version="4.0.0" />
   </ItemGroup>

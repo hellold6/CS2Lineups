@@ -41,11 +41,10 @@ dotnet test
 
 Folder | Description
 -------|------------
-`ValveResourceFormat/` | Core Source 2 resource parsing library (includes `GrenadeSimulator`)
+`ValveResourceFormat/` | Source 2 resource parsing (maps, models, materials, physics) and `GrenadeSimulator`
 `Renderer/` | OpenGL rendering engine, trajectory calculator, and lineup searcher
-`GUI/` | WinForms viewer application with grenade lineup UI
-`CLI/` | Command-line decompiler
-`Tests/` | NUnit test suite
+`GUI/` | WinForms map viewer application with grenade lineup UI
+`Tests/` | NUnit tests for the grenade simulator
 
 ## Physics
 

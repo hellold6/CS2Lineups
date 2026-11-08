@@ -15,12 +15,8 @@ namespace GUI.Utils
     public enum ViewerType
     {
         Default,
-        TextureViewer,
         ModelViewer,
         WorldViewer,
-        ParticleViewer,
-        MaterialViewer,
-        AudioPlayer,
         //PackageViewer,
     }
 
@@ -31,19 +27,6 @@ namespace GUI.Utils
     {
         private static readonly Dictionary<ViewerType, List<KeybindingInfo>> Registry = new()
         {
-            [ViewerType.TextureViewer] =
-            [
-                new("←→↑↓", "Pan"),
-                new("Scroll", "Zoom"),
-                new("Ctrl+Scroll", "Pan H"),
-                new("Shift+Scroll", "Pan V"),
-                new("Ctrl+0", "Reset zoom"),
-                new("Ctrl+±", "Zoom"),
-                new("Ctrl+C", "Copy"),
-                new("Ctrl+S", "Save"),
-                new("F11", "Fullscreen"),
-            ],
-
             [ViewerType.ModelViewer] =
             [
                 //new("WASD", "Move"),
@@ -71,35 +54,6 @@ namespace GUI.Utils
                 //new("Del", "Hide"),
                 new("F11", "Fullscreen"),
                 new("Ctrl+C", "Screenshot"),
-            ],
-
-            [ViewerType.ParticleViewer] =
-            [
-                new("WASD", "Move"),
-                new("Q/Z", "Up/Down"),
-                //new("Mouse", "Rotate"),
-                new("Alt", "Orbit"),
-                new("Shift", "Pan"),
-                new("F11", "Fullscreen"),
-                new("Ctrl+C", "Screenshot"),
-            ],
-
-            [ViewerType.MaterialViewer] =
-            [
-                new("Mouse", "Orbit"),
-                new("Scroll", "Zoom"),
-                new("Ctrl+Drag", "Adjust sun"),
-                new("F11", "Fullscreen"),
-                new("Ctrl+C", "Screenshot"),
-            ],
-
-            [ViewerType.AudioPlayer] =
-            [
-                new("Space", "Play/Pause"),
-                new("←→", "Seek ±5s"),
-                new("↑↓", "Volume"),
-                new("Home/End", "Jump"),
-                new("L", "Loop"),
             ],
 
             [ViewerType.Default] =

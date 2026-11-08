@@ -37,7 +37,7 @@ namespace ValveResourceFormat.Renderer.World
         public WorldNode? MainWorldNode { get; private set; }
 
         /// <summary>Layer names that should be visible by default, populated during loading.</summary>
-        public HashSet<string> DefaultEnabledLayers { get; } = ["Entities", "Particles"];
+        public HashSet<string> DefaultEnabledLayers { get; } = ["Entities"];
 
         /// <summary>Names of info_camera_link entities found in the world.</summary>
         public List<string> CameraNames { get; } = [];
@@ -873,7 +873,6 @@ namespace ValveResourceFormat.Renderer.World
                 }
 
                 var model = entity.GetStringProperty("model");
-                var particle = entity.GetStringProperty("effect_name");
                 var animation = entity.GetStringProperty("defaultanim") ?? entity.GetStringProperty("idleanim");
 
                 var skin = entity.GetStringProperty("skin");
@@ -883,47 +882,6 @@ namespace ValveResourceFormat.Renderer.World
                 {
                     WorldScale = entity.GetFloatProperty("scale");
                     WorldOffset = positionVector;
-                }
-
-                if (particle != null)
-                {
-                    var particleResource = RendererContext.FileLoader.LoadFileCompiled(particle);
-                    var particleSystem = (ParticleSystem?)particleResource?.DataBlock;
-
-                    if (particleSystem != null)
-                    {
-                        var origin = new Vector3(positionVector.X, positionVector.Y, positionVector.Z);
-
-                        try
-                        {
-                            ParticleSnapshot? particleSnapshot = null;
-                            var snapshotFile = entity.GetStringProperty("snapshot_file");
-
-                            if (!string.IsNullOrEmpty(snapshotFile))
-                            {
-                                var snapshotResource = RendererContext.FileLoader.LoadFileCompiled(snapshotFile);
-
-                                if (snapshotResource?.GetBlockByType(BlockType.SNAP) is ParticleSnapshot snapshot)
-                                {
-                                    particleSnapshot = snapshot;
-                                }
-                            }
-
-                            var particleNode = new ParticleSceneNode(scene, particleSystem, particleSnapshot)
-                            {
-                                Name = particle,
-                                Transform = Matrix4x4.CreateTranslation(origin),
-                                LayerName = "Particles",
-                                EntityData = entity,
-                            };
-
-                            scene.Add(particleNode, true);
-                        }
-                        catch (Exception e)
-                        {
-                            RendererContext.Logger.LogError(e, "Failed to setup particle '{Particle}'", particle);
-                        }
-                    }
                 }
 
                 if (IsCamera(classname))
