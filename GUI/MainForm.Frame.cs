@@ -18,9 +18,7 @@ namespace GUI;
 partial class MainForm
 {
     // Custom system menu item IDs (must be multiples of 0x10 due to WM_SYSCOMMAND masking)
-    private const int SC_WEBSITE = 0x1000;
     private const int SC_SETTINGS = 0x1010;
-    private const int SC_ABOUT = 0x1020;
 
     public bool IsWindowMaximised()
     {
@@ -206,22 +204,9 @@ partial class MainForm
         {
             var command = (int)m.WParam & 0xFFF0;
 
-            if (command == SC_WEBSITE)
-            {
-                using var aboutForm = new Forms.AboutForm();
-                aboutForm.OnWebsiteClick(this, EventArgs.Empty);
-                m.Result = 0;
-                return;
-            }
-            else if (command == SC_SETTINGS)
+            if (command == SC_SETTINGS)
             {
                 OnSettingsItemClick(this, EventArgs.Empty);
-                m.Result = 0;
-                return;
-            }
-            else if (command == SC_ABOUT)
-            {
-                OnAboutItemClick(this, EventArgs.Empty);
                 m.Result = 0;
                 return;
             }
@@ -257,19 +242,9 @@ partial class MainForm
 
         PInvoke.AppendMenu(menu, MENU_ITEM_FLAGS.MF_SEPARATOR, 0, null);
 
-        fixed (char* p = "Website")
-        {
-            PInvoke.AppendMenu(menu, MENU_ITEM_FLAGS.MF_STRING, SC_WEBSITE, p);
-        }
-
         fixed (char* p = "Settings")
         {
             PInvoke.AppendMenu(menu, MENU_ITEM_FLAGS.MF_STRING, SC_SETTINGS, p);
-        }
-
-        fixed (char* p = "About")
-        {
-            PInvoke.AppendMenu(menu, MENU_ITEM_FLAGS.MF_STRING, SC_ABOUT, p);
         }
     }
 

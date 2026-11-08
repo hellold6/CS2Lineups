@@ -198,11 +198,6 @@ namespace GUI.Types.GLViewers
                 offset = Math.Clamp(offset, 0f, 2000f);
                 var location = new Vector3(offset, 0, offset);
 
-                if (this is GLAnimationViewer)
-                {
-                    location = new(offset);
-                }
-
                 Input.Camera.SetLocation(location);
                 Input.Camera.LookAt(bbox.Center);
             }
@@ -599,20 +594,12 @@ namespace GUI.Types.GLViewers
                 Renderer.BaseBackground!.SetSolidBackground(ShowSolidBackground);
             });
 
-            if (this is not GLMaterialViewer)
-            {
-                ShowBaseGrid = true;
-                UiControl.AddCheckBox("Show Grid", ShowBaseGrid, (v) => ShowBaseGrid = v);
-            }
+            ShowBaseGrid = true;
+            UiControl.AddCheckBox("Show Grid", ShowBaseGrid, (v) => ShowBaseGrid = v);
         }
 
         protected void AddWireframeToggleControl()
         {
-            if (this is GLMaterialViewer)
-            {
-                return;
-            }
-
             Debug.Assert(UiControl != null);
 
             UiControl.AddCheckBox("Show Wireframe", Renderer.IsWireframe, (v) => Renderer.IsWireframe = v);

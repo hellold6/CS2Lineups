@@ -557,7 +557,7 @@ namespace GUI.Types.GLViewers
             var isEntity = sceneNode.EntityData != null;
             if (entityInfoForm == null)
             {
-                entityInfoForm = new EntityInfoForm(GuiContext);
+                entityInfoForm = new EntityInfoForm();
                 entityInfoForm.Show();
                 entityInfoForm.EntityInfoControl.OutputsGrid.CellDoubleClick += OnEntityInfoOutputsCellDoubleClick;
                 entityInfoForm.EntityInfoControl.Disposed += OnEntityInfoFormDisposed;
@@ -754,100 +754,6 @@ namespace GUI.Types.GLViewers
                 });
                 return;
             }
-
-            Log.Info(nameof(GLWorldViewer), $"Opening {sceneNode.Name} (Id: {pixelInfo.ObjectId})");
-
-            var filename = sceneNode.Name;
-
-            if (sceneNode.EntityData != null)
-            {
-                // Perhaps this needs to check for correct classname?
-                var particle = sceneNode.EntityData.GetStringProperty("effect_name");
-
-                if (particle != null)
-                {
-                    filename = particle;
-                }
-            }
-
-            var foundFile = GuiContext.FindFileWithContext(filename + GameFileLoader.CompiledFileSuffix);
-
-            if (foundFile.Context == null)
-            {
-                return;
-            }
-
-            if (!Matrix4x4.Invert(sceneNode.Transform * Renderer.Camera.CameraViewMatrix, out var transform))
-            {
-                throw new InvalidOperationException("Matrix invert failed");
-            }
-
-            FullScreenForm?.Close();
-
-            foundFile.Context.GLPostLoadAction = (viewerControl) =>
-            {
-                var yaw = MathF.Atan2(-transform.M32, -transform.M31);
-                var scaleZ = MathF.Sqrt(transform.M31 * transform.M31 + transform.M32 * transform.M32 + transform.M33 * transform.M33);
-                var unscaledZ = transform.M33 / scaleZ;
-                var pitch = MathF.Asin(-unscaledZ);
-
-                if (viewerControl is GLSceneViewer sceneViewer)
-                {
-                    sceneViewer.Input.Camera.CopyFrom(Renderer.Camera);
-                    sceneViewer.Input.Camera.SetLocationPitchYaw(transform.Translation, pitch, yaw);
-                }
-
-                if (viewerControl is not GLModelViewer glModelViewer || sceneNode is not ModelSceneNode worldModel)
-                {
-                    return;
-                }
-
-                // Set same mesh groups
-                if (glModelViewer.meshGroupListBox != null)
-                {
-                    foreach (int checkedItemIndex in glModelViewer.meshGroupListBox.CheckedIndices)
-                    {
-                        glModelViewer.meshGroupListBox.SetItemChecked(checkedItemIndex, false);
-                    }
-
-                    foreach (var group in worldModel.GetActiveMeshGroups())
-                    {
-                        var item = glModelViewer.meshGroupListBox.FindStringExact(group);
-
-                        if (item != ListBox.NoMatches)
-                        {
-                            glModelViewer.meshGroupListBox.SetItemChecked(item, true);
-                        }
-                    }
-                }
-
-                // Set same material group
-                if (glModelViewer.materialGroupListBox != null && worldModel.ActiveMaterialGroup != null)
-                {
-                    var skinId = glModelViewer.materialGroupListBox.FindStringExact(worldModel.ActiveMaterialGroup);
-
-                    if (skinId != -1)
-                    {
-                        glModelViewer.materialGroupListBox.SelectedIndex = skinId;
-                    }
-                }
-
-                // Set animation
-                if (glModelViewer.animationComboBox != null && worldModel.AnimationController.ActiveAnimation != null)
-                {
-                    var animationId = glModelViewer.animationComboBox.FindStringExact(worldModel.AnimationController.ActiveAnimation.Name);
-
-                    if (animationId != -1)
-                    {
-                        glModelViewer.animationComboBox.SelectedIndex = animationId;
-                    }
-                }
-            };
-
-            Program.MainForm.Invoke(() =>
-            {
-                Program.MainForm.OpenFile(foundFile.Context, foundFile.PackageEntry);
-            });
         }
 
         private bool TryGetPickedWorldPosition(PickingResponse pickingResponse, out Vector3 worldPosition)

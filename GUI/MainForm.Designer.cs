@@ -58,7 +58,6 @@ namespace GUI
             explorerToolStripMenuItem = new ThemedToolStripMenuItem();
             findToolStripButton = new ThemedToolStripMenuItem();
             settingsToolStripMenuItem = new ThemedToolStripMenuItem();
-            aboutToolStripMenuItem = new ThemedToolStripMenuItem();
             recoverDeletedToolStripMenuItem = new ThemedToolStripMenuItem();
             mainTabs = new MainTabs();
             tabContextMenuStrip = new ThemedContextMenuStrip(components);
@@ -67,12 +66,8 @@ namespace GUI
             closeToolStripMenuItemsToRight = new ThemedToolStripMenuItem();
             closeToolStripMenuItemsToLeft = new ThemedToolStripMenuItem();
             toolStripSeparator5 = new ToolStripSeparator();
-            exportAsIsToolStripMenuItem = new ThemedToolStripMenuItem();
-            decompileExportToolStripMenuItem = new ThemedToolStripMenuItem();
             clearConsoleToolStripMenuItem = new ThemedToolStripMenuItem();
             vpkContextMenu = new ThemedContextMenuStrip(components);
-            extractToolStripMenuItem = new ThemedToolStripMenuItem();
-            decompileToolStripMenuItem = new ThemedToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             copyFileNameToolStripMenuItem = new ThemedToolStripMenuItem();
             copyFileNameOnDiskToolStripMenuItem = new ThemedToolStripMenuItem();
@@ -107,7 +102,7 @@ namespace GUI
             menuStrip.BackColor = System.Drawing.Color.FromArgb(218, 218, 218);
             menuStrip.Dock = DockStyle.Fill;
             menuStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
-            menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, explorerToolStripMenuItem, findToolStripButton, settingsToolStripMenuItem, aboutToolStripMenuItem });
+            menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, explorerToolStripMenuItem, findToolStripButton, settingsToolStripMenuItem });
             menuStrip.Location = new System.Drawing.Point(38, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Padding = new Padding(0, 8, 0, 8);
@@ -202,14 +197,6 @@ namespace GUI
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += OnSettingsItemClick;
             // 
-            // aboutToolStripMenuItem
-            // 
-            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new System.Drawing.Size(76, 32);
-            aboutToolStripMenuItem.SVGImageResourceName = "GUI.Icons.About.svg";
-            aboutToolStripMenuItem.Text = "About";
-            aboutToolStripMenuItem.Click += OnAboutItemClick;
-            // 
             // recoverDeletedToolStripMenuItem
             // 
             recoverDeletedToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -248,7 +235,7 @@ namespace GUI
             // 
             tabContextMenuStrip.BackColor = System.Drawing.Color.FromArgb(236, 236, 236);
             tabContextMenuStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
-            tabContextMenuStrip.Items.AddRange(new ToolStripItem[] { closeToolStripMenuItem, closeToolStripMenuItems, closeToolStripMenuItemsToRight, closeToolStripMenuItemsToLeft, toolStripSeparator5, exportAsIsToolStripMenuItem, decompileExportToolStripMenuItem, clearConsoleToolStripMenuItem });
+            tabContextMenuStrip.Items.AddRange(new ToolStripItem[] { closeToolStripMenuItem, closeToolStripMenuItems, closeToolStripMenuItemsToRight, closeToolStripMenuItemsToLeft, toolStripSeparator5, clearConsoleToolStripMenuItem });
             tabContextMenuStrip.LayoutStyle = ToolStripLayoutStyle.Table;
             tabContextMenuStrip.Name = "contextMenuStrip1";
             tabContextMenuStrip.Size = new System.Drawing.Size(234, 220);
@@ -293,22 +280,6 @@ namespace GUI
             toolStripSeparator5.Name = "toolStripSeparator5";
             toolStripSeparator5.Size = new System.Drawing.Size(230, 6);
             // 
-            // exportAsIsToolStripMenuItem
-            // 
-            exportAsIsToolStripMenuItem.Name = "exportAsIsToolStripMenuItem";
-            exportAsIsToolStripMenuItem.Size = new System.Drawing.Size(233, 30);
-            exportAsIsToolStripMenuItem.SVGImageResourceName = "GUI.Icons.Export.svg";
-            exportAsIsToolStripMenuItem.Text = "Export as is";
-            exportAsIsToolStripMenuItem.Click += ExtractToolStripMenuItem_Click;
-            // 
-            // decompileExportToolStripMenuItem
-            // 
-            decompileExportToolStripMenuItem.Name = "decompileExportToolStripMenuItem";
-            decompileExportToolStripMenuItem.Size = new System.Drawing.Size(233, 30);
-            decompileExportToolStripMenuItem.SVGImageResourceName = "GUI.Icons.Decompile.svg";
-            decompileExportToolStripMenuItem.Text = "Decompile && export";
-            decompileExportToolStripMenuItem.Click += DecompileToolStripMenuItem_Click;
-            // 
             // clearConsoleToolStripMenuItem
             // 
             clearConsoleToolStripMenuItem.Name = "clearConsoleToolStripMenuItem";
@@ -321,25 +292,9 @@ namespace GUI
             // 
             vpkContextMenu.BackColor = System.Drawing.Color.FromArgb(231, 236, 236);
             vpkContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
-            vpkContextMenu.Items.AddRange(new ToolStripItem[] { extractToolStripMenuItem, decompileToolStripMenuItem, toolStripSeparator1, copyFileNameToolStripMenuItem, copyFileNameOnDiskToolStripMenuItem, toolStripSeparator3, openWithoutViewerToolStripMenuItem, openWithDefaultAppToolStripMenuItem, viewAssetInfoToolStripMenuItem, verifyPackageContentsToolStripMenuItem, recoverDeletedToolStripMenuItem });
+            vpkContextMenu.Items.AddRange(new ToolStripItem[] { toolStripSeparator1, copyFileNameToolStripMenuItem, copyFileNameOnDiskToolStripMenuItem, toolStripSeparator3, openWithoutViewerToolStripMenuItem, openWithDefaultAppToolStripMenuItem, viewAssetInfoToolStripMenuItem, verifyPackageContentsToolStripMenuItem, recoverDeletedToolStripMenuItem });
             vpkContextMenu.Name = "vpkContextMenu";
             vpkContextMenu.Size = new System.Drawing.Size(208, 286);
-            // 
-            // extractToolStripMenuItem
-            // 
-            extractToolStripMenuItem.Name = "extractToolStripMenuItem";
-            extractToolStripMenuItem.Size = new System.Drawing.Size(207, 30);
-            extractToolStripMenuItem.SVGImageResourceName = "GUI.Icons.Export.svg";
-            extractToolStripMenuItem.Text = "Export as is";
-            extractToolStripMenuItem.Click += ExtractToolStripMenuItem_Click;
-            // 
-            // decompileToolStripMenuItem
-            // 
-            decompileToolStripMenuItem.Name = "decompileToolStripMenuItem";
-            decompileToolStripMenuItem.Size = new System.Drawing.Size(207, 30);
-            decompileToolStripMenuItem.SVGImageResourceName = "GUI.Icons.Decompile.svg";
-            decompileToolStripMenuItem.Text = "Decompile && export";
-            decompileToolStripMenuItem.Click += DecompileToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
@@ -548,7 +503,6 @@ namespace GUI
 
         private ThemedMenuStrip menuStrip;
         private ThemedToolStripMenuItem closeToolStripMenuItem;
-        private ThemedToolStripMenuItem extractToolStripMenuItem;
         private ThemedToolStripMenuItem copyFileNameToolStripMenuItem;
         private ThemedToolStripMenuItem closeToolStripMenuItemsToLeft;
         private ThemedToolStripMenuItem closeToolStripMenuItemsToRight;
@@ -556,13 +510,9 @@ namespace GUI
         private ThemedToolStripMenuItem findToolStripButton;
         private ThemedToolStripMenuItem openWithoutViewerToolStripMenuItem;
         private ThemedToolStripMenuItem openWithDefaultAppToolStripMenuItem;
-        private ThemedToolStripMenuItem decompileToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator1;
         private ThemedToolStripMenuItem settingsToolStripMenuItem;
-        private ThemedToolStripMenuItem aboutToolStripMenuItem;
         private ThemedToolStripMenuItem recoverDeletedToolStripMenuItem;
-        private ThemedToolStripMenuItem exportAsIsToolStripMenuItem;
-        private ThemedToolStripMenuItem decompileExportToolStripMenuItem;
         private ThemedToolStripMenuItem explorerToolStripMenuItem;
         private ThemedToolStripMenuItem viewAssetInfoToolStripMenuItem;
         private ThemedToolStripMenuItem fileToolStripMenuItem;

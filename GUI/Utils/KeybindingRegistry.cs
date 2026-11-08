@@ -137,10 +137,7 @@ namespace GUI.Utils
                 {
                     return glViewer switch
                     {
-                        GLTextureViewer => ViewerType.TextureViewer,
-                        GLMaterialViewer => ViewerType.MaterialViewer,
                         GLWorldViewer => ViewerType.WorldViewer,
-                        GLParticleViewer => ViewerType.ParticleViewer,
                         GLSceneViewer => ViewerType.ModelViewer,
                         _ => ViewerType.Default,
                     };

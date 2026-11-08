@@ -11,13 +11,13 @@ namespace GUI.Forms
         public EntityInfoControl EntityInfoControl;
         private static WINDOWPLACEMENT? SavedWindowPlacement;
 
-        public EntityInfoForm(VrfGuiContext vrfGuiContext)
+        public EntityInfoForm()
         {
             Width = 800;
             Height = 450;
             Text = "EntityInfoForm";
 
-            EntityInfoControl = new(vrfGuiContext);
+            EntityInfoControl = new();
 
             EntityInfoControl.Dock = DockStyle.Fill;
             Controls.Add(EntityInfoControl);

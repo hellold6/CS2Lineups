@@ -18,16 +18,6 @@ namespace GUI.Forms
             components.Add(tabPageOutputs);
         }
 
-        public EntityInfoControl(VrfGuiContext vrfGuiContext) : this()
-        {
-            ResourceAddDataGridExternalRef(vrfGuiContext);
-        }
-
-        public void ResourceAddDataGridExternalRef(VrfGuiContext vrfGuiContext)
-        {
-            AddDataGridExternalRefAction(vrfGuiContext, dataGridProperties, ColumnValue.Name);
-        }
-
         public void ShowPropertiesTab()
         {
             tabControl.SelectedIndex = 0;
@@ -102,37 +92,6 @@ namespace GUI.Forms
                 delay,
                 stimesToFire
             ]);
-        }
-
-        private void AddDataGridExternalRefAction(VrfGuiContext vrfGuiContext, DataGridView dataGrid, string columnName)
-        {
-            void OnCellDoubleClick(object? sender, DataGridViewCellEventArgs e)
-            {
-                if (e.RowIndex < 0 || sender is not DataGridView grid)
-                {
-                    return;
-                }
-
-                var row = grid.Rows[e.RowIndex];
-                var colName = columnName;
-                var name = (string)row.Cells[colName].Value!;
-
-                var found = Types.Viewers.Resource.OpenExternalReference(vrfGuiContext, name);
-
-                if (found && Parent is Form form)
-                {
-                    form.Close();
-                }
-            }
-
-            void OnDisposed(object? sender, EventArgs e)
-            {
-                dataGrid.CellDoubleClick -= OnCellDoubleClick;
-                dataGrid.Disposed -= OnDisposed;
-            }
-
-            dataGrid.CellDoubleClick += OnCellDoubleClick;
-            dataGrid.Disposed += OnDisposed;
         }
     }
 }

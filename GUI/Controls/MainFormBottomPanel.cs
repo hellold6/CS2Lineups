@@ -1,5 +1,4 @@
 using System.Windows.Forms;
-using GUI.Forms;
 using GUI.Utils;
 
 namespace GUI.Controls;
@@ -9,11 +8,6 @@ public partial class MainFormBottomPanel : Panel
     public MainFormBottomPanel()
     {
         InitializeComponent();
-
-        if (!DesignMode)
-        {
-            newVersionAvailableToolStripMenuItem.Visible = false;
-        }
 
         ResizeRedraw = true;
     }
@@ -48,17 +42,6 @@ public partial class MainFormBottomPanel : Panel
     public void SetVersionText(string text)
     {
         versionLabel.Text = text;
-    }
-
-    public void SetNewVersionAvailable()
-    {
-        newVersionAvailableToolStripMenuItem.Visible = true;
-    }
-
-    private void OnAboutItemClick(object sender, EventArgs e)
-    {
-        using var form = new AboutForm();
-        form.ShowDialog(this);
     }
 
     public void UpdateKeybindings(List<KeybindingInfo> keybindings)

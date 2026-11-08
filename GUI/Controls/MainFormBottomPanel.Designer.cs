@@ -32,7 +32,6 @@ partial class MainFormBottomPanel
     {
         menuStrip1 = new ThemedMenuStrip();
         versionLabel = new ToolStripMenuItem();
-        newVersionAvailableToolStripMenuItem = new ThemedToolStripMenuItem();
         keybindingsPanel = new KeybindingsPanel();
         menuStrip1.SuspendLayout();
         SuspendLayout();
@@ -41,7 +40,7 @@ partial class MainFormBottomPanel
         //
         menuStrip1.BackColor = System.Drawing.Color.FromArgb(218, 218, 218);
         menuStrip1.Dock = DockStyle.Right;
-        menuStrip1.Items.AddRange(new ToolStripItem[] { versionLabel, newVersionAvailableToolStripMenuItem });
+        menuStrip1.Items.AddRange(new ToolStripItem[] { versionLabel });
         menuStrip1.LayoutStyle = ToolStripLayoutStyle.HorizontalStackWithOverflow;
         menuStrip1.Location = new System.Drawing.Point(474, 0);
         menuStrip1.Name = "menuStrip1";
@@ -55,16 +54,6 @@ partial class MainFormBottomPanel
         versionLabel.Name = "versionLabel";
         versionLabel.Size = new System.Drawing.Size(57, 26);
         versionLabel.Text = "Version";
-        versionLabel.Click += OnAboutItemClick;
-        //
-        // newVersionAvailableToolStripMenuItem
-        //
-        newVersionAvailableToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
-        newVersionAvailableToolStripMenuItem.Name = "newVersionAvailableToolStripMenuItem";
-        newVersionAvailableToolStripMenuItem.Size = new System.Drawing.Size(124, 26);
-        newVersionAvailableToolStripMenuItem.SVGImageResourceName = "GUI.Icons.UpdateAvailable.svg";
-        newVersionAvailableToolStripMenuItem.Text = "Update Available";
-        newVersionAvailableToolStripMenuItem.Click += OnAboutItemClick;
         //
         // keybindingsPanel
         //
@@ -93,7 +82,6 @@ partial class MainFormBottomPanel
 
     #endregion
     private System.Windows.Forms.ToolStripMenuItem versionLabel;
-    private ThemedToolStripMenuItem newVersionAvailableToolStripMenuItem;
     private KeybindingsPanel keybindingsPanel;
     private ThemedMenuStrip menuStrip1;
 }

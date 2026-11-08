@@ -145,9 +145,6 @@ namespace GUI
                 mainFormBottomPanel.SetVersionText(versionDisplay);
             }
 
-            CheckForUpdatesIfNecessary();
-
-            HardwareAcceleratedTextureDecoder.Decoder = new GLTextureDecoder(VrfGuiContext.Logger);
             RenderLoopThread.Initialize(this);
 
 #if DEBUG
@@ -611,8 +608,6 @@ namespace GUI
 
                 var canExport = thisTab.Tag is ExportData exportData;
                 toolStripSeparator5.Visible = canExport || tabIndex == 0;
-                exportAsIsToolStripMenuItem.Visible = canExport;
-                decompileExportToolStripMenuItem.Visible = canExport;
 
                 clearConsoleToolStripMenuItem.Visible = tabIndex == 0;
 
@@ -620,12 +615,6 @@ namespace GUI
                 tabContextMenuStrip.Tag = e.Location;
                 tabContextMenuStrip.Show((Control)sender, e.Location);
             }
-        }
-
-        private void OnAboutItemClick(object sender, EventArgs e)
-        {
-            using var form = new AboutForm();
-            form.ShowDialog(this);
         }
 
         private void OnSettingsItemClick(object sender, EventArgs e)
@@ -1162,50 +1151,6 @@ namespace GUI
             base.OnTextChanged(e);
 
             mainFormBottomPanel.Text = Text;
-        }
-
-        private void CheckForUpdatesIfNecessary()
-        {
-            if (!Settings.Config.Update.CheckAutomatically)
-            {
-                return;
-            }
-
-            if (Settings.Config.Update.UpdateAvailable)
-            {
-                mainFormBottomPanel.SetNewVersionAvailable();
-                return;
-            }
-
-            var now = DateTime.UtcNow;
-
-            if (DateTime.TryParseExact(Settings.Config.Update.LastCheck, "s", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var lastCheck))
-            {
-                var diff = now.Subtract(lastCheck);
-
-                // Perform auto update check once a day
-                if (diff.TotalDays < 1)
-                {
-                    return;
-                }
-            }
-
-            Settings.Config.Update.LastCheck = now.ToString("s");
-
-            Task.Run(CheckForUpdates);
-        }
-
-        private async Task CheckForUpdates()
-        {
-            await UpdateChecker.CheckForUpdates().ConfigureAwait(false);
-
-            if (UpdateChecker.IsNewVersionAvailable)
-            {
-                await InvokeAsync(() =>
-                {
-                    mainFormBottomPanel.SetNewVersionAvailable();
-                }).ConfigureAwait(false);
-            }
         }
 
 #if DEBUG

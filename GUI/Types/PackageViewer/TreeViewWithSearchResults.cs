@@ -10,13 +10,21 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using GUI.Controls;
 using GUI.Forms;
-using GUI.Types.PackageViewer.ThumbnailRenderers;
 using GUI.Utils;
 using SteamDatabase.ValvePak;
 using ValveResourceFormat.IO;
 
 namespace GUI.Types.PackageViewer
 {
+    internal enum ThumbnailSizes : int
+    {
+        Tiny = 24,
+        Small = 64,
+        Medium = 128,
+        Big = 192,
+        Huge = 256,
+    }
+
     /// <summary>
     /// Represents a user control in which a TreeView and ListView are used to view a directory/file listing. In addition to a normal TreeView,
     /// this control allows for searching to occur within the TreeView and have the results displayed in a ListView with details about the resulting
@@ -40,19 +48,11 @@ namespace GUI.Types.PackageViewer
 
         private readonly ConcurrentDictionary<string, IconImageCacheEntry?> BigIconImageCache = new();
 
-        private CancellationTokenSource? ThumbnailRenderTokenSource;
-
         // Items are populated lazily in OnLoad so that the listview's font and DPI context have
         // stabilized before the native control caches per-item label measurements. Populating
         // earlier (while the user control is still un-parented) causes labels to be measured
         // against a stale font, leaving them truncated until the layout is invalidated.
         private VirtualPackageNode? PendingInitialDisplayNode;
-
-        private readonly ConcurrentDictionary<PackageEntry, byte> QueuedOrRenderedThumbnailItems = new();
-
-        private readonly CancellationTokenSource RenderLoopCancelationTokenSource = new();
-        private readonly Thread ThumbnailRenderThread;
-        private readonly BlockingCollection<Func<Task>> ThumbnailRenderQueue = [];
 
         private static readonly string[] Columns = ["Name", "Size", "Type"];
 
@@ -83,14 +83,6 @@ namespace GUI.Types.PackageViewer
             {
                 Themer.ThemeControl(control);
             }
-
-            ThumbnailRenderThread = new Thread(RenderLoop)
-            {
-                IsBackground = true,
-                Name = "Thumbnail GL Thread"
-            };
-
-            ThumbnailRenderThread.Start();
 
             searchTextBox.BackColor = Themer.CurrentThemeColors.AppMiddle;
 
@@ -136,26 +128,7 @@ namespace GUI.Types.PackageViewer
             BigIconsImageList = InitThumbnailImageList();
             mainListView.LargeImageList = BigIconsImageList;
 
-            mainListView.Resize += MainListView_Resize;
-            mainListView.Scroll += MainListView_Scroll;
-
             Viewer = viewer;
-        }
-
-        private void MainListView_Scroll(object? sender, ScrollEventArgs e)
-        {
-            if (mainListView.View == View.LargeIcon && ThumbnailRenderTokenSource != null)
-            {
-                _ = UpdateLargeImageListIconsAsync(ThumbnailRenderTokenSource.Token);
-            }
-        }
-
-        private void MainListView_Resize(object? sender, EventArgs e)
-        {
-            if (mainListView.View == View.LargeIcon && ThumbnailRenderTokenSource != null)
-            {
-                _ = UpdateLargeImageListIconsAsync(ThumbnailRenderTokenSource.Token);
-            }
         }
 
         private void MainListView_MouseWheel(object? sender, MouseEventArgs e)
@@ -174,20 +147,6 @@ namespace GUI.Types.PackageViewer
             {
                 gridSizeSlider.Value--;
                 gridSizeSlider_Scroll(gridSizeSlider, EventArgs.Empty);
-            }
-        }
-
-        private void RenderLoop()
-        {
-            try
-            {
-                foreach (var work in ThumbnailRenderQueue.GetConsumingEnumerable(RenderLoopCancelationTokenSource.Token))
-                {
-                    work().GetAwaiter().GetResult();
-                }
-            }
-            catch (OperationCanceledException)
-            {
             }
         }
 
@@ -287,11 +246,6 @@ namespace GUI.Types.PackageViewer
 
         private void MainListView_DisplayNodes(VirtualPackageNode pkgNode, bool updatePath = true)
         {
-            ThumbnailRenderTokenSource?.Dispose();
-            ThumbnailRenderTokenSource = new CancellationTokenSource();
-
-            DrainThumbnailQueue();
-
             ListViewItems.Clear();
 
             if (pkgNode.Parent != null)
@@ -338,197 +292,6 @@ namespace GUI.Types.PackageViewer
             }
 
             AssignSmallIconIndices();
-        }
-
-        private readonly Dictionary<string, ThumbnailRenderer> ThumbnailRenderers = new()
-        {
-            {"vmdl_c", new ThumbnailModelRenderer() },
-            {"vmat_c", new ThumbnailMaterialRenderer() },
-            {"vtex_c", new ThumbnailTextureRenderer() },
-            {"vsvg_c", new ThumbnailSVGRenderer() },
-            {"vpcf_c", new ThumbnailParticleRenderer() },
-        };
-
-        /// <summary>
-        /// Drains pending lambdas from <see cref="ThumbnailRenderQueue"/> (the actual work queue
-        /// consumed by the render thread) and clears <see cref="QueuedOrRenderedThumbnailItems"/>
-        /// (the dictionary that prevents duplicate queueing). Clearing the dictionary alone would
-        /// allow items to be re-queued, but the old lambdas would still be in the BlockingCollection
-        /// waiting to execute ahead of any new work.
-        /// </summary>
-        private void DrainThumbnailQueue()
-        {
-            while (ThumbnailRenderQueue.TryTake(out _))
-            {
-            }
-
-            QueuedOrRenderedThumbnailItems.Clear();
-        }
-
-        private ThumbnailRenderer? GetThumbnailRenderer(string resourceType)
-        {
-            if (!ThumbnailRenderers.TryGetValue(resourceType, out var renderer))
-            {
-                return null;
-            }
-
-            if (!renderer.Loaded)
-            {
-                renderer.Load(mainListView.VrfGuiContext!);
-            }
-
-            return renderer;
-        }
-
-        private async Task UpdateLargeImageListIconsAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                var (first, last) = GetVisibleItemRange();
-
-                if (first == -1)
-                {
-                    return;
-                }
-
-                DrainThumbnailQueue();
-
-                for (var i = first; i <= last; i++)
-                {
-                    if (ListViewItems[i] is not BetterListViewItem castItem)
-                    {
-                        continue;
-                    }
-
-                    var entry = castItem.PackageEntry;
-
-                    if (entry == null)
-                    {
-                        continue;
-                    }
-
-                    // Already has a rendered thumbnail cached, no need to queue
-                    if (BigIconImageCache.ContainsKey(entry.GetFullPath()))
-                    {
-                        continue;
-                    }
-
-                    if (!QueuedOrRenderedThumbnailItems.TryAdd(entry, 0))
-                    {
-                        continue;
-                    }
-
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    try
-                    {
-                        ThumbnailRenderQueue.Add(async () =>
-                        {
-                            var context = mainListView?.VrfGuiContext;
-                            if (context == null)
-                            {
-                                return;
-                            }
-
-                            var renderer = GetThumbnailRenderer(entry.TypeName);
-
-                            if (renderer == null)
-                            {
-                                return; // unsupported type, keep marked so we don't retry
-                            }
-
-                            var entryKey = entry.GetFullPath();
-
-                            BigIconImageCache.TryGetValue(entryKey, out var cachedEntry);
-
-                            var imageIndex = -1;
-                            Bitmap? bitmap = null;
-
-                            if (cachedEntry != null)
-                            {
-                                imageIndex = cachedEntry.index;
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    bitmap = renderer.Render(entry, context, CurrentThumbnailSizes, cancellationToken);
-                                }
-                                catch (Exception ex) when (ex is not OperationCanceledException)
-                                {
-                                    Log.Error(nameof(TreeViewWithSearchResults), $"Failed to render thumbnail for {entry.GetFullPath()}: {ex.Message}");
-                                    return;
-                                }
-
-                                if (bitmap == null)
-                                {
-                                    return; // unrenderable, keep marked so we don't retry
-                                }
-                            }
-
-                            var listView = mainListView;
-                            if (listView == null || listView.IsDisposed)
-                            {
-                                return;
-                            }
-
-                            try
-                            {
-                                await listView.InvokeAsync(() =>
-                                {
-                                    if (listView.IsDisposed || listView.View != View.LargeIcon || !ListViewItems.Contains(castItem))
-                                    {
-                                        bitmap?.Dispose();
-                                        return;
-                                    }
-
-                                    if (imageIndex != -1)
-                                    {
-                                        castItem.ImageIndex = imageIndex;
-                                    }
-                                    else if (bitmap != null)
-                                    {
-                                        lock (ImageListLock)
-                                        {
-                                            // double-checked, another InvokeAsync callback may have stored this entry while we were waiting to be marshalled
-                                            if (BigIconImageCache.TryGetValue(entryKey, out var existing) && existing != null)
-                                            {
-                                                castItem.ImageIndex = existing.index;
-                                            }
-                                            else
-                                            {
-                                                castItem.ImageIndex = BigIconsImageList.Images.Count;
-                                                BigIconsImageList.Images.Add(bitmap);
-                                                BigIconImageCache[entryKey] = new(bitmap, castItem.ImageIndex);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        return;
-                                    }
-
-                                    listView.Invalidate();
-
-                                }, cancellationToken).ConfigureAwait(false);
-                            }
-                            catch (OperationCanceledException)
-                            {
-                                bitmap?.Dispose();
-                            }
-                        }, cancellationToken);
-
-                    }
-                    catch (Exception ex) when (ex is not OperationCanceledException)
-                    {
-                        Log.Error(nameof(TreeViewWithSearchResults), $"Failed to render thumbnail for {entry.GetFullPath()}: {ex}");
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // user navigated away, silently discard
-            }
         }
 
         private static string ResolveExtension(string typeName)
@@ -1541,14 +1304,6 @@ namespace GUI.Types.PackageViewer
 
                 var entry = betterListViewItem.PackageEntry!;
 
-                // Check if we have a rendered thumbnail cached for this specific file
-                if (BigIconImageCache.TryGetValue(entry.GetFullPath(), out var cachedThumbnail) && cachedThumbnail != null)
-                {
-                    betterListViewItem.ImageIndex = cachedThumbnail.index;
-                    continue;
-                }
-
-                // Fall back to SVG icon for the file type
                 var extension = ResolveExtension(entry.TypeName);
 
                 if (!BigIconImageCache.TryGetValue(extension, out var iconImageCacheEntry) || iconImageCacheEntry == null)
@@ -1574,11 +1329,6 @@ namespace GUI.Types.PackageViewer
                 }
 
                 betterListViewItem.ImageIndex = iconImageCacheEntry.index;
-            }
-
-            if (mainListView.View == View.LargeIcon)
-            {
-                _ = UpdateLargeImageListIconsAsync(ThumbnailRenderTokenSource!.Token);
             }
         }
 
@@ -1655,8 +1405,6 @@ namespace GUI.Types.PackageViewer
             mainListView.MouseDown -= MainListView_MouseDown;
             mainListView.MouseWheel -= MainListView_MouseWheel;
             mainListView.ColumnClick -= MainListView_ColumnClick;
-            mainListView.Scroll -= MainListView_Scroll;
-            mainListView.Resize -= MainListView_Resize;
             mainListView.Disposed -= MainListView_Disposed;
 
             mainTreeView.MouseWheel -= MainListView_MouseWheel;
@@ -1679,15 +1427,6 @@ namespace GUI.Types.PackageViewer
             {
                 components?.Dispose();
                 BigIconsImageList.Dispose();
-                ThumbnailRenderTokenSource?.Dispose();
-                ThumbnailRenderQueue.CompleteAdding();
-                ThumbnailRenderQueue.Dispose();
-                RenderLoopCancelationTokenSource.Dispose();
-
-                foreach (var renderer in ThumbnailRenderers.Values)
-                {
-                    renderer.Dispose();
-                }
             }
 
             base.Dispose(disposing);
@@ -1700,10 +1439,6 @@ namespace GUI.Types.PackageViewer
                 Settings.Config.PackageGridView = 0;
 
                 gridSizeSlider.Enabled = false;
-
-                ThumbnailRenderTokenSource?.Dispose();
-                ThumbnailRenderTokenSource = new();
-                DrainThumbnailQueue();
 
                 mainListView.View = View.Details;
                 mainListView.SmallImageList = MainForm.ImageList;
@@ -1750,9 +1485,6 @@ namespace GUI.Types.PackageViewer
 
                 gridSizeSlider.Enabled = true;
 
-                ThumbnailRenderTokenSource?.Dispose();
-                ThumbnailRenderTokenSource = new CancellationTokenSource();
-
                 mainListView.View = View.LargeIcon;
                 AssignIcons();
             }
@@ -1764,15 +1496,10 @@ namespace GUI.Types.PackageViewer
 
             Settings.Config.PackageGridSize = gridSizeSlider.Value;
 
-            ThumbnailRenderTokenSource?.Dispose();
-            ThumbnailRenderTokenSource = new CancellationTokenSource();
-
             // rebuild image list and clear caches
             var oldBigIconsImageList = BigIconsImageList;
             BigIconsImageList = InitThumbnailImageList();
             BigIconImageCache.Clear();
-            DrainThumbnailQueue();
-
             mainListView.LargeImageList = BigIconsImageList;
             oldBigIconsImageList.Dispose();
 
